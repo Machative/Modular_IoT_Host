@@ -37,7 +37,7 @@ class CapturePanel(QWidget):
         self.desc_box = QTextEdit()
         fm = QFontMetrics(self.desc_box.font())
         line_height = fm.lineSpacing()
-        self.desc_box.setFixedHeight(line_height * 3 + 10)  # 3 lines + padding
+        self.desc_box.setFixedHeight(line_height * 3 + 10)
         layout.addWidget(desc_label)
         layout.addWidget(self.desc_box)
 
@@ -103,8 +103,9 @@ WantedBy=multi-user.target
 """
 
         servicename = uuid+"_log.service"
-        servicefile = "/etc/systemd/system/"+servicename
-        Path(servicefile).write_text(service_code)
+        tempfile = root+"/"+servicename
+        Path(tempfile).write_text(service_code)
+        subprocess.run(["sudo","mv",tempfile,"/etc/systemd/system/"])
         
         try:
             subprocess.run(["sudo","systemctl","daemon-reload"],check=True)
