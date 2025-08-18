@@ -124,14 +124,16 @@ WantedBy=multi-user.target
                 else:
                     self.createMQTTLogger(device)
                 device.setStatus(STATUS_CAPT)
+                self.capture_button.setText("Stop capture")
             elif device.getStatus()==STATUS_CAPT: #Stop capture
                 subprocess.run(["sudo","systemctl","stop",servicename],check=True)
                 subprocess.run(["sudo","systemctl","disable",servicename],check=True)
                 device.setStatus(STATUS_CONN)
+                self.capture_button.setText("Capture")
             else: 
                 #TODO: Device disconnected, remove
                 pass
-            self.status_label = device.getStatus()
+            self.status_label.setText(device.getStatus())
 
     def deviceSelected(self, devices):
         for dev in devices:
