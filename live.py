@@ -73,7 +73,8 @@ class LivePanel(QWidget):
             self.y_live.append(fo[1])
 
         # Keep only last historyLen points (scrolling window)
-        historyLen = self.currentDev.getSampleRate() * self.historySec
+        #TODO: Something is going wrong here when the sample rate gets changed
+        historyLen = int(self.currentDev.getSampleRate() * self.historySec)
         self.x_live = self.x_live[-historyLen:]
         self.y_live = self.y_live[-historyLen:]
 

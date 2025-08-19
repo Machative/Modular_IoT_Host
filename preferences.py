@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QDate, Qt
 from PySide6.QtGui import QAction, QActionGroup
 from device import Device
-from device import STATUS_CONN, STATUS_NO_CONN, STATUS_CAPT
+from device import STATUS_CONN, STATUS_NO_CONN, MODE_CAPT, MODE_IDLE
 import time
 
 class PreferencesWindow(QDialog):
@@ -18,19 +18,15 @@ class PreferencesWindow(QDialog):
 
         tabs = QTabWidget()
 
-        client.message_callback_add("ping", self.on_message)
-        self.ping_list = []
-        self.ping_timeout = 1
-
         # Tab 1: Devices
         tab1 = QWidget()
         tab1_layout = QVBoxLayout()
         self.ping_button = QPushButton("Find Devices")
-        self.ping_button.clicked.connect(lambda: self.find_devices(client, devices))
+        self.ping_button.clicked.connect(lambda: self.refreshDevList(client, devices))
         tab1_layout.addWidget(self.ping_button)
         
         self.device_list = QListWidget()
-        self.refreshDevList(devices, client)
+        self.refreshDevList(client, devices)
 
         tab1_layout.addWidget(self.device_list)
         
@@ -56,7 +52,7 @@ class PreferencesWindow(QDialog):
         layout.addWidget(tabs)
         self.setLayout(layout)
 
-    def addDevice(self, device):
+    def showDevice(self, device):
         item = QListWidgetItem(self.device_list)
 
         row_widget = QWidget()
@@ -79,34 +75,14 @@ class PreferencesWindow(QDialog):
         item.setSizeHint(row_widget.sizeHint())
         self.device_list.setItemWidget(item,row_widget)
 
-    def refreshDevList(self, devices, client):
+    def refreshDevList(self,client,devices):
+        Device.find_devices(client,devices)
         self.device_list.clear()
-        for devID in self.ping_list:
-            newDev = Device(devID, client)
-            newDev.setStatus(STATUS_CONN)
-            devices.append(newDev)
 
-        if devices:
-            for dev in devices:
-                self.addDevice(dev)
-        else:
+        # Show connected devices in QListWidget
+        for dev in devices:
+            if dev.getStatus()==STATUS_CONN:
+                self.showDevice(dev)
+        if self.device_list.count()==0:
             item = QListWidgetItem("No devices found.")
             self.device_list.addItem(item)
-
-    def on_message(self,client,userdata,msg):
-        message = msg.payload.decode()
-        if not message == "ping":
-            self.ping_list.append(message)
-                
-    def find_devices(self, client, devices):
-        devices.clear()
-        self.ping_list = []
-
-        client.subscribe("ping")
-        client.publish("ping","ping")
-        ping_start = time.time()
-        #TODO: Make this threaded. See device.self_identify for example
-        while(time.time() - ping_start <= self.ping_timeout): pass
-        
-        self.refreshDevList(devices, client)
-        client.unsubscribe("ping")

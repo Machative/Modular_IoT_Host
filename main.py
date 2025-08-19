@@ -1,5 +1,5 @@
 import sys
-
+import csv
 from PySide6.QtWidgets import (QApplication, QMainWindow, 
 QStackedWidget, QToolBar
 )
@@ -10,6 +10,7 @@ import paho.mqtt.client as mqtt
 from plot import PlotPanel
 from live import LivePanel
 from capture import CapturePanel
+from device import Device
 from preferences import PreferencesWindow
 
 class MainWindow(QMainWindow):
@@ -18,7 +19,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Main Window")
         self.resize(900, 700)
 
-        devices = []
+        devices = Device.importDevices(client)
+        Device.find_devices(client,devices)
 
         # --- Central stacked widget (pages for Plot / Live) ---
         self.stacked = QStackedWidget()

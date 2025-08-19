@@ -11,7 +11,7 @@ from PySide6.QtGui import QAction, QActionGroup, QFontMetrics
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from pathlib import Path
 
-from device import STATUS_CONN, STATUS_NO_CONN, STATUS_CAPT
+from device import STATUS_CONN, STATUS_NO_CONN, MODE_CAPT, MODE_IDLE
 
 class CapturePanel(QWidget):
     def __init__(self, client, devices):
@@ -33,18 +33,19 @@ class CapturePanel(QWidget):
         layout.addLayout(top_row)
 
         # Row 2: Description
+        desc_row = QHBoxLayout()
         desc_label = QLabel("Description:")
-        self.desc_box = QTextEdit()
-        fm = QFontMetrics(self.desc_box.font())
-        line_height = fm.lineSpacing()
-        self.desc_box.setFixedHeight(line_height * 3 + 10)
-        layout.addWidget(desc_label)
-        layout.addWidget(self.desc_box)
+        self.desc_box = QLineEdit()
+        self.desc_box.editingFinished.connect(lambda: self.currentDev.setDesc(self.desc_box.text()))
+        desc_row.addWidget(desc_label)
+        desc_row.addWidget(self.desc_box)
+        layout.addLayout(desc_row)
 
         # Row 3: Units
         units_row = QHBoxLayout()
         units_label = QLabel("Units:")
         self.units_box = QLineEdit()
+        self.units_box.editingFinished.connect(lambda: self.currentDev.setUnits(self.units_box.text()))
         units_row.addWidget(units_label)
         units_row.addWidget(self.units_box)
         layout.addLayout(units_row)
@@ -53,23 +54,28 @@ class CapturePanel(QWidget):
         rate_row = QHBoxLayout()
         rate_label = QLabel("Sample Rate:")
         self.rate_box = QLineEdit()
+        self.rate_box.editingFinished.connect(lambda: self.currentDev.setSampleRate(self.rate_box.text()))
         rate_row.addWidget(rate_label)
         rate_row.addWidget(self.rate_box)
         layout.addLayout(rate_row)
 
-        # Row 5: Capture button + Status
+        # Row 5: Capture button | Mode | Status
         capture_row = QHBoxLayout()
         self.capture_button = QPushButton("Capture")
         self.capture_button.clicked.connect(lambda: self.captureToggle(self.currentDev))
+        self.mode_label = QLabel("")
         self.status_label = QLabel("")
         capture_row.addWidget(self.capture_button)
+        capture_row.addWidget(self.mode_label)
         capture_row.addWidget(self.status_label)
         layout.addLayout(capture_row)
 
         # Finalize layout
+        if devices: self.deviceSelected(devices) # Populate fields with details for defaultly selected device
         layout.addStretch()
         self.setLayout(layout)
 
+#TODO: Time not being recorded properly!
     def createMQTTLogger(self,device):
         uuid = device.getUUID()
         topic = uuid+"/data"
@@ -117,29 +123,33 @@ WantedBy=multi-user.target
     def captureToggle(self, device):
         if device:
             servicename = device.getUUID()+"_log.service"
-            if device.getStatus()==STATUS_CONN: #Begin capture
+            if device.getMode()==MODE_IDLE: #Begin capture
                 if os.path.exists("/etc/systemd/system/"+servicename):
                     subprocess.run(["sudo","systemctl","enable",servicename],check=True)
                     subprocess.run(["sudo","systemctl","start",servicename],check=True)
                 else:
                     self.createMQTTLogger(device)
-                device.setStatus(STATUS_CAPT)
+                device.setMode(MODE_CAPT)
                 self.capture_button.setText("Stop capture")
-            elif device.getStatus()==STATUS_CAPT: #Stop capture
+            elif device.getMode()==MODE_CAPT: #Stop capture
                 subprocess.run(["sudo","systemctl","stop",servicename],check=True)
                 subprocess.run(["sudo","systemctl","disable",servicename],check=True)
-                device.setStatus(STATUS_CONN)
+                device.setMode(MODE_IDLE)
                 self.capture_button.setText("Capture")
             else: 
                 #TODO: Device disconnected, remove
                 pass
-            self.status_label.setText(device.getStatus())
+            self.mode_label.setText(device.getMode())
 
     def deviceSelected(self, devices):
         for dev in devices:
             if dev.getName() == self.device_dropdown.currentText():
                 self.currentDev = dev
+                self.mode_label.setText(self.currentDev.getMode())
                 self.status_label.setText(self.currentDev.getStatus())
+                self.desc_box.setText(self.currentDev.getDesc())
+                self.units_box.setText(self.currentDev.getUnits())
+                self.rate_box.setText(str(self.currentDev.getSampleRate()))
 
     def updateDevices(self, devices):
         self.device_dropdown.clear()
