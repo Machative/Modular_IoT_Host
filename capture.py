@@ -75,7 +75,6 @@ class CapturePanel(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-#TODO: Time not being recorded properly!
     def createMQTTLogger(self,device):
         uuid = device.getUUID()
         topic = uuid+"/data"
@@ -85,7 +84,7 @@ class CapturePanel(QWidget):
         bash_code = f"""#!/bin/bash
 mosquitto_sub -h datalog.local -p 1883 -t "{topic}" | while read -r line
 do
-    echo "$(date + '%Y-%m-%d %H:%M:%S'),$line" >> {fileout}
+    echo "$(date +'%Y-%m-%d_%H:%M:%S.%2N'),$line" >> {fileout}
 done
 """
 
@@ -136,9 +135,6 @@ WantedBy=multi-user.target
                 subprocess.run(["sudo","systemctl","disable",servicename],check=True)
                 device.setMode(MODE_IDLE)
                 self.capture_button.setText("Capture")
-            else: 
-                #TODO: Device disconnected, remove
-                pass
             self.mode_label.setText(device.getMode())
 
     def deviceSelected(self, devices):

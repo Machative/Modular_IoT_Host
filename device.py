@@ -120,7 +120,6 @@ class Device():
         if not message == "profile":
             if message.startswith("sampleRate"):
                 self.sampleRate = float(message[message.index(':')+1:])
-                print("set sample rate to "+str(self.sampleRate))
 
     def getUUID(self):
         return self.uuid

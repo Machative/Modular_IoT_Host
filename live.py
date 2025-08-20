@@ -15,7 +15,7 @@ class LivePanel(QWidget):
         super().__init__()
         layout = QVBoxLayout()
 
-        self.historySec = 5 #seconds of most recent data to display at once
+        self.historySec = 30 #seconds of most recent data to display at once
         self.buffer = []
 
         self.currentDev = None
@@ -73,7 +73,7 @@ class LivePanel(QWidget):
             self.y_live.append(fo[1])
 
         # Keep only last historyLen points (scrolling window)
-        #TODO: Something is going wrong here when the sample rate gets changed
+        # TODO: Make this adjustable, or a better function of sampleRate so that it is guaranteed to show something useful
         historyLen = int(self.currentDev.getSampleRate() * self.historySec)
         self.x_live = self.x_live[-historyLen:]
         self.y_live = self.y_live[-historyLen:]
