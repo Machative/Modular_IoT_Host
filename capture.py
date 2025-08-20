@@ -101,7 +101,7 @@ ExecStart={bashfile}
 Restart=always
 User={os.getenv("USER")}
 StandardOutput=journal
-StandardError=jounral
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
