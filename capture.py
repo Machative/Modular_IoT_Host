@@ -123,7 +123,7 @@ WantedBy=multi-user.target
         if device:
             servicename = device.getUUID()+"_log.service"
             if device.getMode()==MODE_IDLE: #Begin capture
-                if os.path.exists("/etc/systemd/system/"+servicename):
+                if os.path.exists("/etc/systemd/system/"+servicename) and os.path.exists(os.path.dirname(os.path.realpath(__file__))+"/scripts/"+device.getUUID()+"_log.sh"):
                     subprocess.run(["sudo","systemctl","enable",servicename],check=True)
                     subprocess.run(["sudo","systemctl","start",servicename],check=True)
                 else:
