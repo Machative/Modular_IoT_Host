@@ -34,11 +34,13 @@ class PlotPanel(QWidget):
         label1 = QLabel("Start Date:")
         self.date1 = QDateTimeEdit()
         self.date1.setCalendarPopup(True)
+        self.date1.setDisplayFormat("MM/dd/yyyy hh:mm AP")
         self.date1.dateTimeChanged.connect(self.updatePlot)
 
         label2 = QLabel("End Date:")
         self.date2 = QDateTimeEdit()
         self.date2.setCalendarPopup(True)
+        self.date2.setDisplayFormat("MM/dd/yyyy hh:mm AP")
         self.date2.dateTimeChanged.connect(self.updatePlot)
 
         date_layout.addWidget(label1)
