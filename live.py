@@ -35,6 +35,9 @@ class LivePanel(QWidget):
         self.x_live = []
         self.y_live = []
 
+
+        # TODO: Show the points instead of just the connecting lines, so that if there is only one point to plot, it displays.
+        # TODO: Also just fix the interpolation in general. Shouldn't interpolate over periods where there is no data. This is important for plot panel too.
         fig, self.ax = plt.subplots()
         (self.line,) = self.ax.plot([],[])
         self.ax.set_xlabel("Time")

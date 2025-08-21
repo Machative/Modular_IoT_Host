@@ -50,19 +50,19 @@ class MainWindow(QMainWindow):
 
         # Capture tab action
         capture_action = QAction("Capture",self,checkable=True,checked=True)
-        capture_action.triggered.connect(lambda: self.stacked.setCurrentIndex(0))
+        capture_action.triggered.connect(lambda: self.switchPanel(devices,0))
         toolbar.addAction(capture_action)
         tab_group.addAction(capture_action)
 
         # Plot tab action
         plot_action = QAction("Plot", self, checkable=True)
-        plot_action.triggered.connect(lambda: self.stacked.setCurrentIndex(1))
+        plot_action.triggered.connect(lambda: self.switchPanel(devices,1))
         toolbar.addAction(plot_action)
         tab_group.addAction(plot_action)
 
         # Live tab action
         live_action = QAction("Live", self, checkable=True)
-        live_action.triggered.connect(lambda: self.stacked.setCurrentIndex(2))
+        live_action.triggered.connect(lambda: self.switchPanel(devices,2))
         toolbar.addAction(live_action)
         tab_group.addAction(live_action)
 
@@ -74,6 +74,10 @@ class MainWindow(QMainWindow):
         toolbar.addAction(settings_action)
         
         toolbar.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+
+    def switchPanel(self,devices,panelIndex):
+        self.updateDevices(devices)
+        self.stacked.setCurrentIndex(panelIndex)
 
     def open_preferences(self, client, devices):
         dialog = PreferencesWindow(client, devices)
