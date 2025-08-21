@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QLabel, QDateTimeEdit, QDialog, QToolBar, QComboBox, QStackedWidget, 
     QTabWidget, QPushButton, QTextEdit
 )
-from PySide6.QtCore import QDate, Qt
+from PySide6.QtCore import QDateTime, Qt
 from PySide6.QtGui import QAction, QActionGroup
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
@@ -60,8 +60,8 @@ class PlotPanel(QWidget):
 
         self.canvas = FigureCanvas(fig)
 
-        self.date1.setDate(QDate.currentDate())
-        self.date2.setDate(QDate.currentDate())
+        self.date1.setDateTime(QDateTime.currentDateTime().addSecs(60 * -10))
+        self.date2.setDateTime(QDateTime.currentDateTime())
 
         # Assemble Layout
         layout.addLayout(top_row)
@@ -73,14 +73,15 @@ class PlotPanel(QWidget):
         self.x_data.clear()
         self.y_data.clear()
         
-        fromDate = self.date1.dateTime().toString("yyyy-MM-dd_hh:mm")
-        toDate = self.date2.dateTime().toString("yyyy-MM-dd_hh:mm")
+        fromDate = self.date1.dateTime().toString("yyyy-MM-dd_HH:mm")
+        toDate = self.date2.dateTime().toString("yyyy-MM-dd_HH:mm")
         if self.currentDev:
             devData = "res/"+self.currentDev.getUUID()+"_log.csv"
             with open(devData) as fp:
                 reader = csv.reader(fp, delimiter=",",quotechar='"')
                 for row in reader:
                     timestamp, frac = row[0].split(".")
+                    # TODO: When comparing timestamps, csv is in 24:00 system, so you must convert AMPM to that
                     if timestamp >= fromDate and timestamp <= toDate:
                         dt = datetime.strptime(timestamp,"%Y-%m-%d_%H:%M:%S")
                         us = int(frac)*10_000

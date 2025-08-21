@@ -13,6 +13,10 @@ from capture import CapturePanel
 from device import Device
 from preferences import PreferencesWindow
 
+#TODO: You need some kind of watchdog that actively checks which devices are connected
+# And if there are any devices known to be capturing which are currently disconnected, in which case you need to alarm
+# You also need to deal with disconnect on the device side. Why did it restart, why did that fix it, how can you cause it to self-right
+
 class MainWindow(QMainWindow):
     def __init__(self, client):
         super().__init__()

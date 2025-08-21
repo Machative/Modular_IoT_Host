@@ -141,6 +141,7 @@ WantedBy=multi-user.target
         for dev in devices:
             if dev.getName() == self.device_dropdown.currentText():
                 self.currentDev = dev
+                self.capture_button.setText("Stop capture" if self.currentDev.getMode()==MODE_CAPT else "Capture")
                 self.mode_label.setText(self.currentDev.getMode())
                 self.status_label.setText(self.currentDev.getStatus())
                 self.desc_box.setText(self.currentDev.getDesc())
