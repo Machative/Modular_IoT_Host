@@ -127,10 +127,10 @@ class Device():
     def getMode(self):
         return self.mode
     
-    def setMode(self,mode):
+    def setMode(self,mode): #This method should only be called in a thread, since it may hold the program
         self.mode=mode
-        self.client.publish(self.uuid+"/ctrl",("capture" if mode==MODE_CAPT else "idle"))
-        #TODO: Ensure that this gets acknowledged by device
+        maxTimeout = (60/self.sampleRate) + 5   #time between samples, plus 5s
+        self.publishWithACK(self.uuid+"/ctrl",("capture" if mode==MODE_CAPT else "idle"),maxTimeout,0.1)
         Device.updateDevStore(self)
 
     def getStatus(self):
@@ -169,26 +169,26 @@ class Device():
         self.client.publish(self.getUUID()+"/config/sampleRate",sampleRate)
         Device.updateDevStore(self)
     
-    #TODO: This can be generalized to send any command with ack and timeout ^^
-    def selfIdentify(self):
-        ctrlTopic = self.uuid+"/ctrl"
-        self.client.subscribe(ctrlTopic)
-
+    def publishWithACK(self,topic,message,timeout=5,rptDelay=1): #If timeout is -1, try forever (used to exit capture mode)
+        self.client.subscribe(topic)
         ack_event = threading.Event()
         def on_message(client,userdata,message):
             msg = message.payload.decode()
             if msg=="ACK": ack_event.set()
-        def publish_til_ack(timeout=5):
+        def publish_til_ack():
             start_time = time.time()
             while not ack_event.is_set():
-                self.client.publish(ctrlTopic,"identify")
-                time.sleep(1)
-                if time.time()-start_time > timeout:
+                self.client.publish(topic,message)
+                time.sleep(rptDelay)
+                if (not timeout==-1) and (time.time()-start_time > timeout):
                     self.status=STATUS_NO_CONN
                     break
-            self.client.unsubscribe(ctrlTopic)
-
-        self.client.on_message = on_message
+            self.client.unsubscribe(topic)
+        self.client.on_message=on_message
 
         ack_event.clear()
-        threading.Thread(target=publish_til_ack, daemon=True).start()
+        threading.Thread(target=publish_til_ack,daemon=True).start()
+
+    def selfIdentify(self):
+        ctrlTopic = self.uuid+"/ctrl"
+        self.publishWithAck(ctrlTopic,"identify")

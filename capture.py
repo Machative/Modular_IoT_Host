@@ -1,5 +1,5 @@
 import numpy as np
-import os, subprocess
+import os, subprocess, threading
 import matplotlib.pyplot as plt
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -133,9 +133,14 @@ WantedBy=multi-user.target
             elif device.getMode()==MODE_CAPT: #Stop capture
                 subprocess.run(["sudo","systemctl","stop",servicename],check=True)
                 subprocess.run(["sudo","systemctl","disable",servicename],check=True)
-                device.setMode(MODE_IDLE)
-                self.capture_button.setText("Capture")
+                self.capture_button.setText("Stopping capture...")
+                stopCap = threading.Thread(target=lambda: self.stopCapture(device));
+                stopCap.start()
             self.mode_label.setText(device.getMode())
+
+    def stopCapture(self,device):
+        device.setMode(MODE_IDLE)
+        self.capture_button.setText("Capture")
 
     def deviceSelected(self, devices):
         for dev in devices:
