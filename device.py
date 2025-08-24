@@ -191,4 +191,4 @@ class Device():
 
     def selfIdentify(self):
         ctrlTopic = self.uuid+"/ctrl"
-        self.publishWithAck(ctrlTopic,"identify")
+        self.publishWithACK(ctrlTopic,"identify")
