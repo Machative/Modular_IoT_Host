@@ -127,10 +127,10 @@ class Device():
     def getMode(self):
         return self.mode
     
-    def setMode(self,mode): #This method should only be called in a thread, since it may hold the program
+    def setMode(self,mode): # This should only be run within a thread as it may hold
         self.mode=mode
         maxTimeout = (60/self.sampleRate) + 5   #time between samples, plus 5s
-        self.publishWithACK(self.uuid+"/ctrl",("capture" if mode==MODE_CAPT else "idle"),maxTimeout,0.1)
+        self.publishHoldACK(self.uuid+"/ctrl",("capture" if mode==MODE_CAPT else "idle"),maxTimeout,0.1)
         Device.updateDevStore(self)
 
     def getStatus(self):
@@ -169,7 +169,7 @@ class Device():
         self.client.publish(self.getUUID()+"/config/sampleRate",sampleRate)
         Device.updateDevStore(self)
     
-    def publishWithACK(self,topic,message,timeout=5,rptDelay=1): #If timeout is -1, try forever (used to exit capture mode)
+    def publishHoldACK(self,topic,message,timeout=5,rptDelay=1):
         self.client.subscribe(topic)
         ack_event = threading.Event()
         def on_message(client,userdata,message):
@@ -180,7 +180,29 @@ class Device():
             while not ack_event.is_set():
                 self.client.publish(topic,message)
                 time.sleep(rptDelay)
-                if (not timeout==-1) and (time.time()-start_time > timeout):
+                if time.time()-start_time > timeout:
+                    self.status=STATUS_NO_CONN
+                    break
+            self.client.unsubscribe(topic)
+        self.client.on_message=on_message
+
+        ack_event.clear()
+        pubThread = threading.Thread(target=publish_til_ack,daemon=True)
+        pubThread.start()
+        pubThread.join()
+
+    def publishWithACK(self,topic,message,timeout=5,rptDelay=1):
+        self.client.subscribe(topic)
+        ack_event = threading.Event()
+        def on_message(client,userdata,message):
+            msg = message.payload.decode()
+            if msg=="ACK": ack_event.set()
+        def publish_til_ack():
+            start_time = time.time()
+            while not ack_event.is_set():
+                self.client.publish(topic,message)
+                time.sleep(rptDelay)
+                if time.time()-start_time > timeout:
                     self.status=STATUS_NO_CONN
                     break
             self.client.unsubscribe(topic)
