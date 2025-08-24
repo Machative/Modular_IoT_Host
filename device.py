@@ -129,6 +129,8 @@ class Device():
     
     def setMode(self,mode):
         self.mode=mode
+        self.client.publish(self.uuid+"/ctrl",("capture" if mode==MODE_CAPT else "idle"))
+        #TODO: Ensure that this gets acknowledged by device
         Device.updateDevStore(self)
 
     def getStatus(self):

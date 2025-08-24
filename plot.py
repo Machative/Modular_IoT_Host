@@ -81,7 +81,6 @@ class PlotPanel(QWidget):
                 reader = csv.reader(fp, delimiter=",",quotechar='"')
                 for row in reader:
                     timestamp, frac = row[0].split(".")
-                    # TODO: When comparing timestamps, csv is in 24:00 system, so you must convert AMPM to that
                     if timestamp >= fromDate and timestamp <= toDate:
                         dt = datetime.strptime(timestamp,"%Y-%m-%d_%H:%M:%S")
                         us = int(frac)*10_000
